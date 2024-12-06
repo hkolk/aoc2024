@@ -64,7 +64,6 @@ data class Point2D(val x:Int, val y:Int): Comparable<Point2D> {
             this.y >= a.y.coerceAtMost(b.y) &&
             this.y <= a.y.coerceAtLeast(b.y)
 
-
     companion object {
         val NORTH: (Point2D) -> Point2D =        { Point2D(x = it.x,      y = it.y - 1  ) }
         val NORTHEAST: (Point2D) -> Point2D =    { Point2D(x = it.x + 1,  y = it.y - 1  ) }
@@ -86,6 +85,13 @@ data class Point2D(val x:Int, val y:Int): Comparable<Point2D> {
         fun fromString(coords: String): Point2D {
             val (x, y) = coords.splitIgnoreEmpty(",").map { it.toInt() }
             return Point2D(x, y)
+        }
+        fun DIRECTION.rightTurn(): DIRECTION = when(this) {
+            NORTH -> EAST
+            EAST -> SOUTH
+            SOUTH -> WEST
+            WEST -> NORTH
+            else -> throw IllegalArgumentException()
         }
     }
 

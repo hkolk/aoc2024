@@ -33,25 +33,20 @@ class Day5 {
         fun solvePart2():Int {
             val invalid = validated.filter { !it.first}.map{it.second}
 
-            val pageComparator = object : Comparator<Int> {
-                override fun compare(first: Int, second: Int): Int {
-                    if(!rules.containsKey(first)) {
-                        return 0
-                    }
-                    val before = (rules[first]?:listOf())
-                    if(second in before) {
-                        return 1
-                    } else {
-                        return -1
-                    }
+            val pageComparator = Comparator<Int>{ first, second ->
+                val before = rules[first]
+                if(before == null) {
+                    0
+                } else if (second in before) {
+                    1
+                } else {
+                    -1
                 }
             }
 
-            val sorted = invalid.map { update ->
+            return invalid.map { update ->
                 update.sortedWith(pageComparator)
-            }
-            //println(sorted)
-            return sorted.sumOf { it[it.size/2] }
+            }.sumOf { it[it.size/2] }
         }
     }
 
