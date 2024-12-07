@@ -31,10 +31,10 @@ class Day6 {
 
         fun solvePart1():Int = loopCheck(startmap).second
         fun solvePart2():Int {
-            return startmap.filter { it.value == '.' }.keys.count { replace ->
+            return startmap.filter { it.value == '.' }.keys.toList().pmap { replace ->
                 val newMap = startmap.filterNot { it.key == replace } + (replace to '#')
                 loopCheck(newMap).first
-            }
+            }.count { it }
         }
     }
 
