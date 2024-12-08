@@ -111,3 +111,11 @@ fun <A, B>List<A>.pmap(f: suspend (A) -> B): List<B> = runBlocking {
 fun <A, B>List<A>.pmapIndexed(f: suspend (index: Int, A) -> B): List<B> = runBlocking {
     mapIndexed { idx, it -> async(Dispatchers.Default) { f(idx, it) } }.awaitAll()
 }
+
+fun Long.concatenate(right: Long): Long {
+    var pow = 10
+    while(right >= pow) {
+        pow *= 10
+    }
+    return this * pow + right
+}

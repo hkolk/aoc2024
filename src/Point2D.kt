@@ -9,6 +9,7 @@ data class Point2D(val x:Int, val y:Int): Comparable<Point2D> {
     fun diag(): Sequence<Point2D> = sequence {
         DIRECTIONSDIAG.map { yield(it(this@Point2D)) }
     }
+    operator fun plus(other: Point2D) = Point2D(this.x + other.x, this.y + other.y)
 
     operator fun minus(other: Point2D) = Point2D(this.x - other.x, this.y - other.y)
 

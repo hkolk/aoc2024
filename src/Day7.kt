@@ -9,32 +9,38 @@ class Day7 {
                 it.first().toLong() to it.drop(1).map { it.toLong() }
         } }
 
+
+
         fun findEquations(expected: Long, left: List<Long>, acc: Long, concat:Boolean = false) : Boolean {
+            if(acc > expected) return false // optimise
+
             if(left.isEmpty()) {
                 return acc == expected
             }
             val multiply = findEquations(expected, left.drop(1), acc * left.first(), concat)
+            if(multiply) return true
             val addition = findEquations(expected, left.drop(1), acc + left.first(), concat)
+            if(addition) return true
             val concatOutcome = concat && findEquations(
                 expected,
                 left.drop(1),
-                (acc.toString() + left.first().toString()).toLong(),
-                concat)
-            return multiply || addition || concatOutcome
+                acc.concatenate(left.first()),
+                true)
+            return concatOutcome
         }
 
         fun solvePart1():Long {
-            return equations.map {
-                if(findEquations(it.first, it.second, 0L)) {
+            return equations.sumOf {
+                if (findEquations(it.first, it.second, 0L)) {
                     it.first
                 } else {
                     0
                 }
-            }.sum()
+            }
         }
         fun solvePart2():Long {
-            return equations.map {
-                if(findEquations(it.first, it.second, 0L, true)) {
+            return equations.pmap {
+                if (findEquations(it.first, it.second, 0L, true)) {
                     it.first
                 } else {
                     0
@@ -77,7 +83,11 @@ class Day7 {
         @Test
         fun `Part 2 Answer`() {
             val answer = Logic(realInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(37598910447546)
+        }
+        @Test
+        fun testConcat() {
+            assertThat((12L).concatenate(34L)).isEqualTo(1234)
         }
     }
 
