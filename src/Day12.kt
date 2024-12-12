@@ -8,9 +8,7 @@ class Day12 {
         fun adjacent() : Set<Fence> {
             val outerAdj = outer.adjacent().filter { it != inner }.toSet()
             return inner.adjacent().filter { it != outer }.flatMap { adj ->
-                val asdf = adj.adjacent().filter { it in outerAdj }.map { Fence(adj, it) }
-                println("$adj, ${asdf.toList()}")
-                asdf
+                adj.adjacent().filter { it in outerAdj }.map { Fence(adj, it) }
             }.toSet()
         }
     }
@@ -33,7 +31,6 @@ class Day12 {
                 val name = map[start]!!
                 val region = getArea(name, start, setOf(start))
                 val perimeter = region.sumOf { it.adjacent().filter { it !in region }.count() }
-                //println("[$name] [${region.size}] [${perimeter}]: $region")
                 uncovered.removeAll(region)
                 score += perimeter * region.size
             }
@@ -41,15 +38,7 @@ class Day12 {
         }
 
         fun walkAndRemove(start: Fence, process: List<Fence>): Set<Fence> {
-            //println("Walk and Remove: $start --- $process")
-            val connected = start.inner.adjacent().flatMap { adj ->
-                //println(adj)
-                adj.adjacent().filter { it in start.outer.adjacent() }
-                    .map { Fence(adj, it) }
-                    .filter { process.contains(it) }
-                    .toList()
-            }.toList()
-            //println("${start.first} --- $connected")
+            val connected = start.adjacent().filter { process.contains(it) }
             return connected.flatMap {
                 walkAndRemove(it, process.filterNot { it in connected })
             }.toSet() + start
@@ -61,11 +50,8 @@ class Day12 {
             while(process.isNotEmpty()) {
                 sides++
                 val active = process.removeFirst()
-                val asdf = walkAndRemove(active, process)
-                //println(asdf)
-                process.removeAll(asdf)
+                process.removeAll(walkAndRemove(active, process))
             }
-            //println("Sides: $sides")
             return sides
         }
 
@@ -78,7 +64,6 @@ class Day12 {
                 val region = getArea(name, start, setOf(start))
                 val fences = region.flatMap { pos -> pos.adjacent().filter { it !in region }.map { Fence(pos , it) } }
                 val sides = connectedFences(fences)
-                //println("[$name] [${region.size}] [${fences.count()}] [$sides]: $region")
                 uncovered.removeAll(region)
                 score += sides * region.size
             }
