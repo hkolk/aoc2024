@@ -3,6 +3,18 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Nested
 
 class Day12 {
+
+    data class Fence(val inner: Point2D, val outer:Point2D) {
+        fun adjacent() : Set<Fence> {
+            val outerAdj = outer.adjacent().filter { it != inner }.toSet()
+            return inner.adjacent().filter { it != outer }.flatMap { adj ->
+                val asdf = adj.adjacent().filter { it in outerAdj }.map { Fence(adj, it) }
+                println("$adj, ${asdf.toList()}")
+                asdf
+            }.toSet()
+        }
+    }
+
     inner class Logic(input: List<String>) {
         val map = input.flatMapIndexed{ y, line -> line.mapIndexed{x, c -> Point2D(x, y) to c}}.toMap()
 
@@ -28,12 +40,12 @@ class Day12 {
             return score
         }
 
-        fun walkAndRemove(start: Pair<Point2D, Point2D>, process: List<Pair<Point2D, Point2D>>): Set<Pair<Point2D, Point2D>> {
+        fun walkAndRemove(start: Fence, process: List<Fence>): Set<Fence> {
             //println("Walk and Remove: $start --- $process")
-            val connected = start.first.adjacent().flatMap { adj ->
+            val connected = start.inner.adjacent().flatMap { adj ->
                 //println(adj)
-                adj.adjacent().filter { it in start.second.adjacent() }
-                    .map { adj to it }
+                adj.adjacent().filter { it in start.outer.adjacent() }
+                    .map { Fence(adj, it) }
                     .filter { process.contains(it) }
                     .toList()
             }.toList()
@@ -43,7 +55,7 @@ class Day12 {
             }.toSet() + start
         }
 
-        fun connectedFences(process: List<Pair<Point2D, Point2D>>): Int {
+        fun connectedFences(process: List<Fence>): Int {
             val process = process.toMutableList()
             var sides = 0
             while(process.isNotEmpty()) {
@@ -64,9 +76,9 @@ class Day12 {
                 val start = uncovered.removeFirst()
                 val name = map[start]!!
                 val region = getArea(name, start, setOf(start))
-                val fences = region.flatMap { pos -> pos.adjacent().filter { it !in region }.map { pos to it } }
+                val fences = region.flatMap { pos -> pos.adjacent().filter { it !in region }.map { Fence(pos , it) } }
                 val sides = connectedFences(fences)
-                println("[$name] [${region.size}] [${fences.count()}] [$sides]: $region")
+                //println("[$name] [${region.size}] [${fences.count()}] [$sides]: $region")
                 uncovered.removeAll(region)
                 score += sides * region.size
             }
@@ -96,6 +108,17 @@ MMMISSJEEE
             assertThat(answer).isEqualTo(1930)
         }
         @Test
+        fun fenceTest() {
+            val start = Fence(Point2D(0, 0), Point2D(0, 1))
+            val adj = start.adjacent()
+            val expect = setOf(
+                Fence(start.inner.move(Point2D.EAST), start.outer.move(Point2D.EAST)),
+                Fence(start.inner.move(Point2D.WEST), start.outer.move(Point2D.WEST))
+            )
+            assertThat(adj).isEqualTo(expect)
+
+        }
+        @Test
         fun `Part 1 Answer`() {
             val answer = Logic(realInput).solvePart1()
             assertThat(answer).isEqualTo(1471452)
@@ -108,7 +131,7 @@ MMMISSJEEE
         @Test
         fun `Part 2 Answer`() {
             val answer = Logic(realInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(863366)
         }
     }
 
