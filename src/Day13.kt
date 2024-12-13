@@ -3,11 +3,19 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Nested
 
 class Day13 {
-    data class ClawMachine(val A: Point2D, val B: Point2D,val  prize: Point2DWide)
+    data class ClawMachine(val A: Point2DWide, val B: Point2DWide,val  prize: Point2DWide) {
+        fun multiply(byX: Long, byY:Long): ClawMachine {
+            return ClawMachine(
+                Point2DWide(A.x * byX, A.y * byY),
+                Point2DWide(B.x * byX, B.y * byY),
+                Point2DWide(prize.x * byX, prize.y * byY)
+            )
+        }
+    }
     inner class Logic(val input: List<String>) {
         val machines = input.splitBy { it.isEmpty() }.map { machine ->
-            val a = machine[0].splitIgnoreEmpty("+",",").let { Point2D(it[1].toInt(), it[3].toInt()) }
-            val b = machine[1].splitIgnoreEmpty("+",",").let { Point2D(it[1].toInt(), it[3].toInt()) }
+            val a = machine[0].splitIgnoreEmpty("+",",").let { Point2DWide(it[1].toLong(), it[3].toLong()) }
+            val b = machine[1].splitIgnoreEmpty("+",",").let { Point2DWide(it[1].toLong(), it[3].toLong()) }
             val prize = machine[2].splitIgnoreEmpty("=",",").let { Point2DWide(it[1].toLong(), it[3].toLong()) }
             ClawMachine(a, b, prize)
         }
@@ -35,10 +43,33 @@ class Day13 {
         }
         fun solvePart1() = solve(machines)
         fun solvePart2():Long {
+            var cost = 0L
+
             val addition = 10_000_000_000_000
+            //val addition = 0
             val newMachines = machines.map { it.copy(prize = it.prize.copy(x = it.prize.x + addition, y = it.prize.y+addition)) }
             println(newMachines)
-            return solve(newMachines)
+            newMachines.forEach { machine ->
+                var localCost = Long.MAX_VALUE
+                println(machine)
+                val multiplied = machine.multiply(machine.B.y, machine.B.x)
+                println(multiplied)
+                val aPresses = (multiplied.prize.x - multiplied.prize.y) / (multiplied.A.x - multiplied.A.y)
+                println(aPresses)
+                val remainder = machine.prize.x - (machine.A.x * aPresses)
+                if(remainder % machine.B.x == 0L) {
+                    // possible hit, let's verify
+                    val bPresses = remainder / machine.B.x
+                    if(aPresses * machine.A.y + bPresses * machine.B.y == machine.prize.y) {
+                        localCost = localCost.coerceAtMost(aPresses * 3 + bPresses)
+                        println("got a hit: $aPresses, $bPresses, $localCost")                        }
+                }
+                if(localCost != Long.MAX_VALUE) {
+                    cost += localCost
+                }
+            }
+            return cost
+            //return solve(newMachines)
             TODO()
         }
     }
@@ -62,10 +93,6 @@ Prize: X=7870, Y=6450
 Button A: X+69, Y+23
 Button B: X+27, Y+71
 Prize: X=18641, Y=10279
-
-Button A: X+48, Y+77
-Button B: X+34, Y+12
-Prize: X=6510, Y=1583
     """.trimIndent().lines()
 
         val realInput = Resources.resourceAsList("day13.txt")
@@ -82,12 +109,12 @@ Prize: X=6510, Y=1583
         @Test
         fun `Part 2 Example`() {
             val answer = Logic(testInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(875318608908L)
         }
         @Test
         fun `Part 2 Answer`() {
             val answer = Logic(realInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(93217456941970L)
         }
     }
 
