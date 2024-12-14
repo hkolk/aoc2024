@@ -31,15 +31,6 @@ class Day14 {
             Robot(Point2D(parts[0], parts[1]), Point2D(parts[2], parts[3]))
         }
         val max = if(input.size == 500) Point2D(101, 103) else Point2D(11, 7)
-        val xmasTree = listOf(
-            Point2D((max.x-1)/2, 0),
-            Point2D((max.x-1)/2+1, 1),
-            Point2D((max.x-1)/2-1, 1),
-            Point2D((max.x-1)/2+2, 2),
-            Point2D((max.x-1)/2-2, 2)
-        )
-
-
 
         fun printRobots(robots: List<Robot>) {
             val map = robots.map { it.pos }.groupBy { it }.mapValues { it.value.size }
@@ -74,19 +65,38 @@ class Day14 {
             return quadrants.values.multiply()
         }
 
-        
+
         fun solvePart2():Int {
             var robots = startingRobots
-            (1..100).forEach{second ->
+            (1..1000000).forEach{second ->
                 robots = robots.map { robot ->
                     val newPos = robot.pos.move(robot.velocity).teleport(max)
                     Robot(newPos, robot.velocity)
                 }
-
+                val robotPositions = robots.map { it.pos }.toSet()
+                val peakDetected = robotPositions.any { robot ->
+                    (robotPositions.contains(robot.move(Point2D.SOUTHEAST, 1) ) &&
+                            robotPositions.contains( robot.move(Point2D.SOUTHEAST, 2) ) &&
+                            robotPositions.contains( robot.move(Point2D.SOUTHEAST, 3) ) &&
+                            robotPositions.contains( robot.move(Point2D.SOUTHWEST, 1) ) &&
+                            robotPositions.contains( robot.move(Point2D.SOUTHWEST, 2) ) &&
+                            robotPositions.contains( robot.move(Point2D.SOUTHWEST, 3) )
+                        )
+                }
+                if(peakDetected) {
+                    println("== $second ==")
+                    printRobots(robots)
+                    return second
+                }
+/*
                 if(robots.filter { it.pos in xmasTree }.toSet().count() == xmasTree.count()) {
                     println("== $second ==")
                     printRobots(robots)
                 }
+                robots.filter { it.pos == xmasTree.first() }.forEach {
+                    //println("[$second] $it")
+                }
+                */
             }
             return 0
         }
@@ -129,7 +139,7 @@ p=9,5 v=-3,-3
         @Test
         fun `Part 2 Answer`() {
             val answer = Logic(realInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(8280)
         }
     }
 
