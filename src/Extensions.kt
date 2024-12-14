@@ -43,7 +43,7 @@ inline fun <T, R : Comparable<R>> Iterable<T>.minAndMaxOf(selector: (T) -> R): P
     return minValue to maxValue
 }
 
-fun List<Number>.multiply(): Long = map { it.toLong() }.fold(1L) { acc, it -> acc * it }
+fun Collection<Number>.multiply(): Long = map { it.toLong() }.fold(1L) { acc, it -> acc * it }
 
 fun List<String>.rotate(): List<String> = (0 until first().length).map { x -> (size-1 downTo 0).map { this[it][x] }.joinToString("") }
 

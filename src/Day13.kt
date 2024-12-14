@@ -12,7 +12,7 @@ class Day13 {
             )
         }
     }
-    inner class Logic(val input: List<String>) {
+    inner class Logic(input: List<String>) {
         val machines = input.splitBy { it.isEmpty() }.map { machine ->
             val a = machine[0].splitIgnoreEmpty("+",",").let { Point2DWide(it[1].toLong(), it[3].toLong()) }
             val b = machine[1].splitIgnoreEmpty("+",",").let { Point2DWide(it[1].toLong(), it[3].toLong()) }
@@ -21,56 +21,33 @@ class Day13 {
         }
 
         fun solve(machines: List<ClawMachine>):Long {
-            var cost = 0L
-            machines.forEach { machine ->
-                var localCost = Long.MAX_VALUE
-                val maxA = machine.prize.x / machine.A.x
-                (maxA downTo 0).forEach { aPresses ->
-                    val remainder = machine.prize.x - (machine.A.x * aPresses)
-                    if(remainder % machine.B.x == 0L) {
-                        // possible hit, let's verify
-                        val bPresses = remainder / machine.B.x
-                        if(aPresses * machine.A.y + bPresses * machine.B.y == machine.prize.y) {
-                            localCost = localCost.coerceAtMost(aPresses * 3 + bPresses)
-                            println("got a hit: $aPresses, $bPresses, $localCost")                        }
-                    }
-                }
-                if(localCost != Long.MAX_VALUE) {
-                    cost += localCost
-                }
-            }
-            return cost
-        }
-        fun solvePart1() = solve(machines)
-        fun solvePart2():Long {
-            var cost = 0L
-
-            val addition = 10_000_000_000_000
-            //val addition = 0
-            val newMachines = machines.map { it.copy(prize = it.prize.copy(x = it.prize.x + addition, y = it.prize.y+addition)) }
-            println(newMachines)
-            newMachines.forEach { machine ->
-                var localCost = Long.MAX_VALUE
-                println(machine)
+            return machines.sumOf { machine ->
+                //println(machine)
                 val multiplied = machine.multiply(machine.B.y, machine.B.x)
-                println(multiplied)
+                //println(multiplied)
                 val aPresses = (multiplied.prize.x - multiplied.prize.y) / (multiplied.A.x - multiplied.A.y)
-                println(aPresses)
+                //println(aPresses)
                 val remainder = machine.prize.x - (machine.A.x * aPresses)
                 if(remainder % machine.B.x == 0L) {
                     // possible hit, let's verify
                     val bPresses = remainder / machine.B.x
                     if(aPresses * machine.A.y + bPresses * machine.B.y == machine.prize.y) {
-                        localCost = localCost.coerceAtMost(aPresses * 3 + bPresses)
-                        println("got a hit: $aPresses, $bPresses, $localCost")                        }
-                }
-                if(localCost != Long.MAX_VALUE) {
-                    cost += localCost
+                        val localCost = (aPresses * 3 + bPresses)
+                        //println("got a hit: $aPresses, $bPresses, $localCost")
+                        localCost
+                    } else {
+                        0L
+                    }
+                } else {
+                    0L
                 }
             }
-            return cost
-            //return solve(newMachines)
-            TODO()
+        }
+        fun solvePart1() = solve(machines)
+        fun solvePart2():Long {
+            val addition = 10_000_000_000_000
+            val newMachines = machines.map { it.copy(prize = it.prize.copy(x = it.prize.x + addition, y = it.prize.y+addition)) }
+            return solve(newMachines)
         }
     }
 
