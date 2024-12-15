@@ -16,10 +16,9 @@ class Day15 {
 
 
     inner class Logic(input: List<String>) {
-        val map = input.splitBy { it.isEmpty() }.first().flatMapIndexed { y, line ->
+        val smallmap = input.splitBy { it.isEmpty() }.first().flatMapIndexed { y, line ->
             line.mapIndexed { x, c -> Point2D(x, y) to c }
         }.toMap().toMutableMap()
-        val moves = input.splitBy { it.isEmpty() }.last().joinToString("")
 
         val widemap = input.splitBy { it.isEmpty() }.first().flatMapIndexed { y, line ->
             line.flatMapIndexed { x, c ->
@@ -33,151 +32,72 @@ class Day15 {
             }
         }.toMap().toMutableMap()
 
-        fun recursePush(pos: Point2D, dir: DIRECTION): Boolean {
-            if(map[pos] == '#') {
+        val moves = input.splitBy { it.isEmpty() }.last().joinToString("")
+
+        lateinit var map: MutableMap<Point2D, Char>
+
+        fun recurseWidePush(pos: List<Point2D>, dir: DIRECTION): Boolean {
+            if(pos.any { map[it] == '#' }) {
+                // any of the future spots has hit a wall
                 return false
-            } else if(map[pos] == 'O'){
-                // try to push the box
-                val push = recursePush(pos.move(dir), dir)
-                if(push) {
-                    map[pos.move(dir)] = 'O'
-                    map[pos] = '.'
+            } else if(pos.any{ map[it] in setOf('[', ']', 'O') }) {
+                // not yet everything has spaces
+                val front = if(dir in setOf(Point2D.EAST, Point2D.WEST)) {
+                    assert(pos.size == 1)
+                    pos.toSet()
+                } else {
+                    pos.filter {
+                        map[it] in setOf('[', ']', 'O')
+                    }.flatMap {
+                        when(map[it]) {
+                            '[' -> listOf(it, it.move(Point2D.EAST))
+                            ']' -> listOf(it, it.move(Point2D.WEST))
+                            'O' -> listOf(it)
+                            else -> throw IllegalArgumentException("Unknown char: ${map[it]}")
+                        }
+                    }.toSet()
+                }
+                if(recurseWidePush(front.map { it.move(dir) }, dir)) {
+                    // got space, so let's move everything
+                    front.forEach {
+                        map[it.move(dir)] = map[it]!!
+                        map[it] = '.'
+                    }
                     return true
                 } else {
                     return false
                 }
-            } else {
-                // empty space
+            } else  {
                 return true
             }
         }
 
-        fun recurseWidePush(pos: List<Point2D>, dir: DIRECTION): Boolean {
-            //println("  Recurse: $pos")
-            if(pos.any { widemap[it] == '#' }) {
-                // any of the future spots has hit a wall
-                return false
-            }
-            if(pos.any{ widemap[it] in setOf('[', ']') }) {
-                if(dir in setOf(Point2D.EAST, Point2D.WEST)) {
-                    assert(pos.size == 1)
-                    val push = recurseWidePush(listOf(pos.first().move(dir)), dir)
-                    if (push) {
-                        widemap[pos.first().move(dir)] = widemap[pos.first()]!!
-                        widemap[pos.first()] = '.'
-                        return true
-                    } else {
-                        return false
-                    }
-                } else {
-                    val front = pos.filter {
-                        widemap[it] in setOf('[', ']')
-                    }.flatMap {
-                        listOf(it, if(widemap[it] == '[') it.move(Point2D.EAST) else it.move(Point2D.WEST))
-                    }.toSet()
-                    val push = recurseWidePush(front.map { it.move(dir) }, dir)
-                    if(push) {
-                        front.forEach {
-                            widemap[it.move(dir)] = widemap[it]!!
-                            widemap[it] = '.'
-                        }
-                        return true
-                    } else {
-                        return false
-                    }
-                }
-            }
-            if(pos.all{ widemap[it] !in setOf('[', ']') }) {
-                return true
-            }
-            throw IllegalStateException("No clue how I got here")
-            /*
-            if(widemap[pos] == '#') {
-                return false
-            } else if(widemap[pos] in setOf('[', ']')){
-                // try to push the box
-                if(dir in setOf(Point2D.EAST, Point2D.WEST)) {
-                    val push = recurseWidePush(pos.move(dir), dir)
-                    if (push) {
-                        widemap[pos.move(dir)] = widemap[pos]!!
-                        widemap[pos] = '.'
-                        return true
-                    } else {
-                        return false
-                    }
-                } else {
-                    val other = if(widemap[pos] == '[') pos.move(Point2D.EAST) else pos.move(Point2D.WEST)
-                    //println("$pos, $other, ${widemap[pos]}, ${widemap[other]}")
-                    TODO()
-                    // push both things up or down
-                }
-            } else {
-                // empty space
-                return true
-            }
-
-             */
+        fun solvePart1(): Int {
+            map = smallmap
+            return solve()
         }
-
-        fun solvePart1():Int {
+        fun solvePart2(): Int {
+            map = widemap
+            return solve()
+        }
+        fun solve():Int {
             var robot = map.entries.first { it.value == '@' }.key
-
             moves.forEach { move ->
-                //println("Move: $move")
                 val dir = move.toDirection()
                 val newPos = robot.move(dir)
-                //map[robot] = '.'
-                robot = if(map[newPos] == 'O') {
-                    val push = recursePush(newPos, dir)
-                    if (push) {
-                        //println(" Box -> Pushed")
-                        // take the spot
-                        newPos
-                    } else {
-                        //println(" Box -> Stuck")
-                        robot
+                robot = when(map[newPos]) {
+                    '[', ']', 'O' -> {
+                        if (recurseWidePush(listOf(newPos), dir)) {
+                            newPos
+                        } else {
+                            robot
+                        }
                     }
-                } else if(map[newPos] == '#') {
-                    //println(" Wall -> Stuck")
-                    robot
-                } else {
-                    //println(" Empty -> Moved")
-                    newPos
+                    '#' -> robot
+                    else -> newPos
                 }
-                //map[robot] = '@'
-                //map.printChars('.')
             }
-            return map.filter { it.value == 'O' }.keys.sumOf{it.y * 100 + it.x}
-        }
-        fun solvePart2():Int {
-            widemap.printChars('.')
-            var robot = widemap.entries.first { it.value == '@' }.key
-            moves.forEach { move ->
-                //println("Move: $move")
-                val dir = move.toDirection()
-                val newPos = robot.move(dir)
-                widemap[robot] = '.'
-                robot = if(widemap[newPos] in setOf('[', ']')) {
-                    val push = recurseWidePush(listOf(newPos), dir)
-                    if (push) {
-                        //println(" Box -> Pushed")
-                        // take the spot
-                        newPos
-                    } else {
-                        //println(" Box -> Stuck")
-                        robot
-                    }
-                } else if(widemap[newPos] == '#') {
-                    //println(" Wall -> Stuck")
-                    robot
-                } else {
-                    //println(" Empty -> Moved")
-                    newPos
-                }
-                widemap[robot] = '@'
-                //widemap.printChars('.')
-            }
-            return widemap.filter { it.value == '[' }.keys.sumOf{it.y * 100 + it.x}
+            return map.filter { it.value in setOf('[', 'O') }.keys.sumOf{it.y * 100 + it.x}
         }
     }
 
@@ -238,22 +158,24 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^
             val answer = Logic(testInput).solvePart1()
             assertThat(answer).isEqualTo(2028)
             val answer2 = Logic(testInput2).solvePart1()
-            assertThat(answer).isEqualTo(10092)
+            assertThat(answer2).isEqualTo(10092)
         }
         @Test
         fun `Part 1 Answer`() {
             val answer = Logic(realInput).solvePart1()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(1485257)
         }
         @Test
         fun `Part 2 Example`() {
-            val answer = Logic(special).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            //val answer = Logic(testInput).solvePart2()
+            //assertThat(answer).isEqualTo(2028)
+            val answer2 = Logic(testInput2).solvePart2()
+            assertThat(answer2).isEqualTo(9021)
         }
         @Test
         fun `Part 2 Answer`() {
             val answer = Logic(realInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(1475512)
         }
     }
 
