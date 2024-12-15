@@ -52,8 +52,46 @@ class Day15 {
             }
         }
 
-        fun recurseWidePush(pos: Point2D, dir: DIRECTION): Boolean {
-            println("  Recurse: $pos, ${widemap[pos]}")
+        fun recurseWidePush(pos: List<Point2D>, dir: DIRECTION): Boolean {
+            //println("  Recurse: $pos")
+            if(pos.any { widemap[it] == '#' }) {
+                // any of the future spots has hit a wall
+                return false
+            }
+            if(pos.any{ widemap[it] in setOf('[', ']') }) {
+                if(dir in setOf(Point2D.EAST, Point2D.WEST)) {
+                    assert(pos.size == 1)
+                    val push = recurseWidePush(listOf(pos.first().move(dir)), dir)
+                    if (push) {
+                        widemap[pos.first().move(dir)] = widemap[pos.first()]!!
+                        widemap[pos.first()] = '.'
+                        return true
+                    } else {
+                        return false
+                    }
+                } else {
+                    val front = pos.filter {
+                        widemap[it] in setOf('[', ']')
+                    }.flatMap {
+                        listOf(it, if(widemap[it] == '[') it.move(Point2D.EAST) else it.move(Point2D.WEST))
+                    }.toSet()
+                    val push = recurseWidePush(front.map { it.move(dir) }, dir)
+                    if(push) {
+                        front.forEach {
+                            widemap[it.move(dir)] = widemap[it]!!
+                            widemap[it] = '.'
+                        }
+                        return true
+                    } else {
+                        return false
+                    }
+                }
+            }
+            if(pos.all{ widemap[it] !in setOf('[', ']') }) {
+                return true
+            }
+            throw IllegalStateException("No clue how I got here")
+            /*
             if(widemap[pos] == '#') {
                 return false
             } else if(widemap[pos] in setOf('[', ']')){
@@ -77,6 +115,8 @@ class Day15 {
                 // empty space
                 return true
             }
+
+             */
         }
 
         fun solvePart1():Int {
@@ -113,31 +153,31 @@ class Day15 {
             widemap.printChars('.')
             var robot = widemap.entries.first { it.value == '@' }.key
             moves.forEach { move ->
-                println("Move: $move")
+                //println("Move: $move")
                 val dir = move.toDirection()
                 val newPos = robot.move(dir)
                 widemap[robot] = '.'
                 robot = if(widemap[newPos] in setOf('[', ']')) {
-                    val push = recurseWidePush(newPos, dir)
+                    val push = recurseWidePush(listOf(newPos), dir)
                     if (push) {
-                        println(" Box -> Pushed")
+                        //println(" Box -> Pushed")
                         // take the spot
                         newPos
                     } else {
-                        println(" Box -> Stuck")
+                        //println(" Box -> Stuck")
                         robot
                     }
                 } else if(widemap[newPos] == '#') {
-                    println(" Wall -> Stuck")
+                    //println(" Wall -> Stuck")
                     robot
                 } else {
-                    println(" Empty -> Moved")
+                    //println(" Empty -> Moved")
                     newPos
                 }
                 widemap[robot] = '@'
-                widemap.printChars('.')
+                //widemap.printChars('.')
             }
-            return widemap.filter { it.value == 'O' }.keys.sumOf{it.y * 100 + it.x}
+            return widemap.filter { it.value == '[' }.keys.sumOf{it.y * 100 + it.x}
         }
     }
 
@@ -147,7 +187,7 @@ class Day15 {
 ########
 #.#....#
 #......#
-#.OOO..#
+#...O..#
 #..OO@.#
 #..O...#
 #......#
