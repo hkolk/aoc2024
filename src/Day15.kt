@@ -65,9 +65,12 @@ class Day15 {
                     }
                     return true
                 } else {
+                    // no space in front
                     return false
                 }
             } else  {
+                // everything in front is space, so all clear to push (the startpos is empty as well)
+                assert(pos.all { map[it] in setOf('.', '@') })
                 return true
             }
         }
