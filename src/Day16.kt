@@ -16,7 +16,7 @@ fun DIRECTION.nice(): String {
 }
 
 class Day16 {
-    data class Move(val pos: Point2D, val direction: DIRECTION, val cost:Int) {
+    data class Move(val pos: Point2D, val direction: DIRECTION, val cost:Int, val history: Set<Point2D>) {
         override fun toString(): String {
             return "Move($pos, ${direction.nice()}, cost=$cost)"
         }
@@ -28,48 +28,39 @@ class Day16 {
         }.toMap()
 
 
-        fun solvePart1():Int {
+        fun solve():Pair<Int, Int> {
             val start = map.filter { it.value == 'S' }.keys.first()
             val end = map.filter { it.value == 'E' }.keys.first()
 
+            val bestPathNodes = mutableSetOf<Point2D>()
             val queue = PriorityQueue<Move>(compareBy {  it.cost })
-            queue.add(Move(start, Point2D.EAST, 0))
+            queue.add(Move(start, Point2D.EAST, 0, setOf(start)))
             val moveHistory = mutableSetOf<Pair<Point2D, DIRECTION>>()
-            var i = 0
+            var cheapest = Integer.MAX_VALUE
+
             while (queue.isNotEmpty()) {
                 val current = queue.poll()
                 moveHistory.add(current.pos to current.direction)
-                if(i++ < 10) {
-                    println(current)
-                }
                 if(current.pos == end) {
-                    // end state
-                    return current.cost
+                    bestPathNodes.addAll(current.history)
+                    cheapest = current.cost
+
                 }
                 val newMoves = listOf(
-                    Move(current.pos, current.direction.rightTurn(), current.cost+1000),
-                    Move(current.pos, current.direction.leftTurn(), current.cost+1000),
-                    Move(current.pos.move(current.direction), current.direction, current.cost+1),
+                    Move(current.pos, current.direction.rightTurn(), current.cost+1000, current.history),
+                    Move(current.pos, current.direction.leftTurn(), current.cost+1000, current.history),
+                    Move(current.pos.move(current.direction), current.direction, current.cost+1, current.history+current.pos.move(current.direction)),
                     )
-                queue.addAll(newMoves.filter { map[it.pos] != '#' && !moveHistory.contains(it.pos to it.direction) })
-                /*val newMoves = Point2D.DIRECTIONS.mapNotNull { dir ->
-                    val next = current.pos.move(dir)
-                    if(map[next]!='#') {
-                        val extraCost = if(dir == current.direction) 1 else 1001
-                        Move(next, dir, current.cost+extraCost)
-                    } else {
-                        null
-                    }
-                }
-                queue.addAll(newMoves)
-                 */
+                queue.addAll(newMoves.filter {
+                    map[it.pos] != '#' &&
+                            !moveHistory.contains(it.pos to it.direction) &&
+                            it.cost <= cheapest
+                })
             }
-            TODO()
-            return 0
+            return cheapest to bestPathNodes.count()
         }
-        fun solvePart2():Int {
-            return 0
-        }
+        fun solvePart1() = solve().first
+        fun solvePart2() = solve().second
     }
 
     @Nested
@@ -109,12 +100,12 @@ class Day16 {
         @Test
         fun `Part 2 Example`() {
             val answer = Logic(testInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(64)
         }
         @Test
         fun `Part 2 Answer`() {
             val answer = Logic(realInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(504)
         }
     }
 
