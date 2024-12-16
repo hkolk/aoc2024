@@ -83,10 +83,10 @@ data class Point2D(val x:Int, val y:Int): Comparable<Point2D> {
         val WEST: (Point2D) -> Point2D =         { Point2D(x = it.x - 1,  y = it.y      ) }
         val NORTHWEST: (Point2D) -> Point2D =    { Point2D(x = it.x - 1,  y = it.y - 1  ) }
 
-        val DIRECTIONS: List<(Point2D) -> Point2D> = listOf(
+        val DIRECTIONS: List<DIRECTION> = listOf(
             NORTH, EAST, SOUTH, WEST
         )
-        val DIRECTIONSDIAG: List<(Point2D) -> Point2D> = listOf(
+        val DIRECTIONSDIAG: List<DIRECTION> = listOf(
             NORTHEAST, SOUTHEAST, SOUTHWEST, NORTHWEST
         )
         val ALLDIRECTIONS = DIRECTIONS + DIRECTIONSDIAG
@@ -100,6 +100,13 @@ data class Point2D(val x:Int, val y:Int): Comparable<Point2D> {
             EAST -> SOUTH
             SOUTH -> WEST
             WEST -> NORTH
+            else -> throw IllegalArgumentException()
+        }
+        fun DIRECTION.leftTurn(): DIRECTION = when(this) {
+            NORTH -> WEST
+            EAST -> NORTH
+            SOUTH -> EAST
+            WEST -> SOUTH
             else -> throw IllegalArgumentException()
         }
     }
@@ -170,3 +177,4 @@ fun Char.toPipeChar() = when(this) {
     'L' -> '╚'
     else -> this
 }
+
