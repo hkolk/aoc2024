@@ -119,3 +119,12 @@ fun Long.concatenate(right: Long): Long {
     }
     return this * pow + right
 }
+
+
+fun Long.pow(other:Long): Long {
+    if(other == 0L) {
+        return 1
+    }
+    assert(other > -1)
+    return this * pow(other-1)
+}

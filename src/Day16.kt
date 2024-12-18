@@ -5,16 +5,6 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Nested
 import java.util.PriorityQueue
 
-fun DIRECTION.nice(): String {
-    return when(this) {
-        Point2D.NORTH -> "NORTH"
-        Point2D.WEST -> "WEST"
-        Point2D.SOUTH -> "SOUTH"
-        Point2D.EAST -> "EAST"
-        else -> throw IllegalArgumentException("Cannot map")
-    }
-}
-
 class Day16 {
     data class Move(val pos: Point2D, val direction: DIRECTION, val cost:Int, val history: Set<Point2D>) {
         override fun toString(): String {

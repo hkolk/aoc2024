@@ -1,4 +1,5 @@
 import kotlin.math.absoluteValue
+import kotlin.math.atan2
 
 typealias DIRECTION = (Point2D) -> Point2D
 
@@ -109,6 +110,11 @@ data class Point2D(val x:Int, val y:Int): Comparable<Point2D> {
             WEST -> SOUTH
             else -> throw IllegalArgumentException()
         }
+        fun heuristic(start: Point2D, finish: Point2D): Int {
+            val dx = (start.x - finish.x).absoluteValue
+            val dy = (start.y - finish.y).absoluteValue
+            return (dx + dy) + (-2) * minOf(dx, dy)
+        }
     }
 
     override fun compareTo(other: Point2D): Int {
@@ -178,3 +184,12 @@ fun Char.toPipeChar() = when(this) {
     else -> this
 }
 
+fun DIRECTION.nice(): String {
+    return when(this) {
+        Point2D.NORTH -> "NORTH"
+        Point2D.WEST -> "WEST"
+        Point2D.SOUTH -> "SOUTH"
+        Point2D.EAST -> "EAST"
+        else -> throw IllegalArgumentException("Cannot map")
+    }
+}
