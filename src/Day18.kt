@@ -46,7 +46,8 @@ class Day18 {
                     start = Point2D(0, 0),
                     finish = Point2D(mapSize - 1, mapSize - 1),
                     map = map,
-                    heuristic = Point2D::heuristic,
+                    heuristic = {a, b -> a.distance(b)},
+                    //heuristic = Point2D::heuristic,
                     adjacent = {coord, map -> coord.adjacent().filter { !map.containsKey(it) }.toList()},
                     moveCost = {_, _ -> 1 })
                 //val path = findPath(Point2D(0, 0), Point2D(mapSize - 1, mapSize - 1), map)

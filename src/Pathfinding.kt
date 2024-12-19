@@ -2,6 +2,16 @@ import java.util.*
 
 object Pathfinding {
 
+    /**
+     * Example:
+     *                 val path = Pathfinding.aStar(
+     *                     start = Point2D(0, 0),
+     *                     finish = Point2D(mapSize - 1, mapSize - 1),
+     *                     map = map,
+     *                     heuristic = {a, b -> a.distance(b)},
+     *                     adjacent = {coord, map -> coord.adjacent().filter { !map.containsKey(it) }.toList()},
+     *                     moveCost = {_, _ -> 1 })
+     */
     fun <T, A> aStar(
         start: T,
         finish: T,
