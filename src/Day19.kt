@@ -4,40 +4,27 @@ import org.junit.jupiter.api.Nested
 
 class Day19 {
 
-    inner class Cacher<A, T> (val function: (A) -> T) {
-        val cache = mutableMapOf<A, T>()
-        fun invoke(value: A): T {
-            if(!cache.containsKey(value)) {
-                cache[value] = function(value)
-            }
-            return cache[value]!!
-        }
-    }
-
     inner class Logic(input: List<String>) {
         val towels = input.first().splitIgnoreEmpty(", ")
         val patterns = input.drop(2)
 
-        val cache = mutableMapOf<String, Long>()
+        val recurseCache = FunctionCache(::recursePattern)
 
-        fun recursePattern(pattern: String, debug:Boolean=false): Long {
-            if(cache.containsKey(pattern)) return cache[pattern]!!
+        fun recursePattern(pattern: String): Long {
             if(pattern.isEmpty()) {
                 return 1
             }
-            cache[pattern] = towels.sumOf { towel ->
+            return towels.sumOf { towel ->
                 if(pattern.startsWith(towel)) {
-                    if(debug) println("Got a hit on $pattern for $towel")
-                    recursePattern(pattern.drop(towel.length), debug)
+                    recurseCache(pattern.drop(towel.length))
                 } else {
                     0
                 }
             }
-            return cache[pattern]!!
         }
 
-        fun solvePart1() = patterns.count { recursePattern(it) > 0 }
-        fun solvePart2() = patterns.sumOf { recursePattern(it) }
+        fun solvePart1() = patterns.count { recurseCache(it) > 0 }
+        fun solvePart2() = patterns.sumOf { recurseCache(it) }
     }
 
     @Nested
@@ -75,7 +62,7 @@ bbrgwb
         @Test
         fun `Part 2 Answer`() {
             val answer = Logic(realInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(1016700771200474L)
         }
     }
 

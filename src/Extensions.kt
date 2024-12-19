@@ -128,3 +128,13 @@ fun Long.pow(other:Long): Long {
     assert(other > -1)
     return this * pow(other-1)
 }
+
+class FunctionCache<A, T> (val function: (A) -> T) {
+    val cache = mutableMapOf<A, T>()
+    operator fun invoke(value: A): T {
+        if(!cache.containsKey(value)) {
+            cache[value] = function(value)
+        }
+        return cache[value]!!
+    }
+}
