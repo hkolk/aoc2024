@@ -1,4 +1,3 @@
-import apple.laf.JRSUIConstants.Direction
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Nested
@@ -51,8 +50,10 @@ class Day21 {
                     (1..diff.y).map { 'v' } +
                     (-1 downTo diff.x).map { '<' } +
                     (-1 downTo diff.y).map { '^' }).toList()
-            return moves.combinations(moves.size, true).map {
-                val simulateMove = it.fold(this to true) { (prev, valid), cur ->
+            val costs = moves.permutations().map {
+                val move = it.joinToString("").toList()
+                //if(this == Point2D(2, 3) && other == Point2D(0, 1)) println(move)
+                val simulateMove = move.fold(this to true) { (prev, valid), cur ->
                     val next = prev.move(cur.toDirection())
                     if(!map.contains(next)) {
                         next to false
@@ -61,11 +62,15 @@ class Day21 {
                     }
                 }
                 if(simulateMove.second) {
-                    recursiveCosts(it, 3) to it
+                    recursiveCosts(move+'A', 4) to move
                 } else {
-                    Int.MAX_VALUE to it
+                    Int.MAX_VALUE to move
                 }
-            }.minBy { it.first }.second
+            }
+            //if(this == Point2D(2, 3) && other == Point2D(0, 1)) println(moves)
+            //if(this == Point2D(2, 2) && other == Point2D(0, 0)) costs.toList().sortedBy { it.first }.forEach { println(it) }
+
+            return costs.minBy { it.first }.second
 
             //return moves
         }
@@ -199,17 +204,27 @@ class Day21 {
                 return reversed.joinToString("")
             }
 
+            //val elements = listOf('A', 'B', 'C')
+            //elements.permutations(3).forEach { println(it) }
+
             KeyPad.NUMERIC.moves.toList().sortedBy { it.first.first }.forEach{ move ->
                 println("${move.first} -> ${move.second}")
             }
 
-            val reverse = "v<<A>>^AAAvA^Av<<A>>^AAvA^A<vA^>AA<A>Av<<A>A^>AAA<Av>A^A"
+            val reverse = "v<<A>>^AvA^Av<<A>>^AA<vA<A>>^AAvAA<^A>A<vA^>AA<A>Av<<A>A^>AAA<Av>A^A"
             val step1 = reverseDirectional(reverse)
             println(step1)
             val step2 = reverseDirectional(step1)
             println(step2)
             val step3 = reverseDirectional(step2, KeyPad.NUMERIC)
             println(step3)
+
+            println(KeyPad.DIRECTIONAL.punch("^A^^<<A>>AvvvA".toList()).joinToString(""))
+            println(KeyPad.DIRECTIONAL.punch("^A<<^^A>>AvvvA".toList()).joinToString(""))
+
+            println(KeyPad.DIRECTIONAL.punch(KeyPad.DIRECTIONAL.punch("^A^^<<A>>AvvvA".toList())).joinToString(""))
+            println(KeyPad.DIRECTIONAL.punch(KeyPad.DIRECTIONAL.punch("^A<<^^A>>AvvvA".toList())).joinToString(""))
+
 
 
             fun recurse(start: Char, translate: List<Char>, depth:Int): List<List<Char>> {
@@ -232,8 +247,9 @@ class Day21 {
                     }
                 }
             }
-            val result = recurse('A', listOf('v', 'A'), 3)
-            //result.forEach { println("${it.size} -> $it") }
+            println("============================")
+            val result = recurse('A', listOf('<', '<', '^', '^', 'A'), 1)
+            result.forEach { println("${it.size} -> $it") }
             //val run1 = KeyPad.DIRECTIONAL.hardCodedGetMove('A', '<')
             //println(run1)
 
@@ -274,8 +290,29 @@ class Day21 {
 
             TODO()
         }
-        fun solvePart2():Int {
-            return 0
+
+        val recurseCached = FunctionCache(::recurseCount)
+        fun recurseCount(punch: Pair<List<Char>, Int>): Long {
+            //println(' '.times(2 - punch.second) + " Punching ${punch.first}")
+
+            if(punch.second <= 0) {
+                // return now
+                return 1L
+            }
+            val moves = KeyPad.DIRECTIONAL.punch(punch.first)
+            val splitMoves = moves.splitBy({it == 'A'}, true)
+            //println(' '.times(2 - punch.second) + " Moves: $splitMoves")
+            return splitMoves.sumOf{ recurseCached(it to punch.second-1)}
+        }
+
+        fun solvePart2():Long {
+            val punchers = 26 // robots and humans
+            return codes.sumOf{
+                println(KeyPad.NUMERIC.punch(it.toList()))
+                val size = recurseCached(KeyPad.NUMERIC.punch(it.toList()) to punchers)
+                println(size)
+                size * it.take(3).toInt()
+            }
         }
     }
 
@@ -294,22 +331,23 @@ class Day21 {
         @Test
         fun `Part 1 Example`() {
             val answer = Logic(testInput).solvePart1()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(126384)
         }
+
         @Test
         fun `Part 1 Answer`() {
             val answer = Logic(realInput).solvePart1()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(176870)
         }
         @Test
         fun `Part 2 Example`() {
             val answer = Logic(testInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(154115708116294L)
         }
         @Test
         fun `Part 2 Answer`() {
             val answer = Logic(realInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(223902935165512L)
         }
     }
 

@@ -23,6 +23,23 @@ fun List<String>.splitBy(func: (String) -> Boolean): List<List<String>> {
     if(collect.isNotEmpty()) ret.add(collect)
     return ret
 }
+fun <T> List<T>.splitBy(func: (T) -> Boolean, keepDelimiter:Boolean = false): List<List<T>> {
+    val ret = mutableListOf<List<T>>()
+    var collect = mutableListOf<T>()
+    for(line in this) {
+        if(func(line)) {
+            if(keepDelimiter) {
+                collect.add(line)
+            }
+            if(collect.isNotEmpty()) ret.add(collect)
+            collect = mutableListOf()
+        } else {
+            collect.add(line)
+        }
+    }
+    if(collect.isNotEmpty()) ret.add(collect)
+    return ret
+}
 
 @OptIn(kotlin.experimental.ExperimentalTypeInference::class)
 @OverloadResolutionByLambdaReturnType
