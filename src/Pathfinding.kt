@@ -71,4 +71,25 @@ object Pathfinding {
         }
         return Triple(false, listOf(), 0)
     }
+
+    fun <T, A> BreadthFirstSearch(
+        start: T,
+        finish: T,
+        map: Map<T, A>,
+        adjacent: (T, Map<T, A>)-> List<T>
+        ): Int? {
+        val Q = mutableListOf(start to 0)
+        val explored = mutableSetOf(start)
+        while(Q.isNotEmpty()) {
+            val current = Q.removeFirst()
+            if(current.first == finish) {
+                return current.second
+            }
+            adjacent(current.first, map).filter { it !in explored}.forEach{
+                Q.add(it to current.second+1)
+            }
+            explored.add(current.first)
+        }
+        return null
+    }
 }
