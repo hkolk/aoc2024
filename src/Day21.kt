@@ -1,4 +1,5 @@
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Nested
 import java.lang.IllegalStateException
@@ -15,13 +16,7 @@ class Day21 {
             )
         }.toMap()
 
-        internal fun Point2D.diffToChar() = when(this) {
-                Point2D(-1,  0) -> '<'
-                Point2D( 1,  0) -> '>'
-                Point2D( 0, -1) -> '^'
-                Point2D( 0,  1) -> 'v'
-                else -> throw IllegalStateException("Cannot map $this to character")
-            }
+
 
         internal fun recursiveCosts(translate: List<Char>, depth:Int): Int {
             val newOptions = translate.fold(listOf<List<Char>>() to 'A' ) { (acc, prev), cur ->
@@ -31,7 +26,6 @@ class Day21 {
                 } else {
                     options.flatMap { option -> acc.map { it + option } }
                 }
-                //println("From $prev to $cur: $options, $generate")
 
                 generate to cur
             }.first
@@ -52,7 +46,6 @@ class Day21 {
                     (-1 downTo diff.y).map { '^' }).toList()
             val costs = moves.permutations().map {
                 val move = it.joinToString("").toList()
-                //if(this == Point2D(2, 3) && other == Point2D(0, 1)) println(move)
                 val simulateMove = move.fold(this to true) { (prev, valid), cur ->
                     val next = prev.move(cur.toDirection())
                     if(!map.contains(next)) {
@@ -67,21 +60,18 @@ class Day21 {
                     Int.MAX_VALUE to move
                 }
             }
-            //if(this == Point2D(2, 3) && other == Point2D(0, 1)) println(moves)
-            //if(this == Point2D(2, 2) && other == Point2D(0, 0)) costs.toList().sortedBy { it.first }.forEach { println(it) }
-
             return costs.minBy { it.first }.second
 
-            //return moves
         }
         internal fun Char.toDirection() = when(this) {
             '>' -> Point2D.EAST
             '<' -> Point2D.WEST
             '^' -> Point2D.NORTH
             'v' -> Point2D.SOUTH
-            else -> throw IllegalArgumentException("asdf $this")
+            else -> throw IllegalArgumentException("Invalid direction identifier: $this")
         }
 
+        // We need this to kickstart the list of moves
         fun hardCodedGetMove(from: Char, to: Char): List<List<Char>> {
             return when(from){
                 'A' -> when(to) {
@@ -132,24 +122,9 @@ class Day21 {
             if(from == to) {
                 return listOf()
             }
-            if(keypad.size == 5) {
-                return hardCodedGetMove(from, to).first().dropLast(1)
-            }
-            return moves[from to to] ?: throw IllegalArgumentException("Could not find move from $from to $to")
+            return moves[from to to] ?: throw IllegalStateException("Could not find move from $from to $to")
         }
 
-        fun reverseMove(start: Char, lMoves: List<Char>): Char {
-            assert(lMoves.last() == 'A')
-            val startPos = keypad.firstOrNull { it.first == start }?.second ?: throw IllegalArgumentException("Could not find start $start")
-            val finish = lMoves.dropLast(1).fold(startPos) { acc, move ->
-                val ret = acc.move(move.toDirection())
-                if(keypad.none { it.second == ret }) {
-                   throw IllegalStateException("Moved to empty spot while $start and $lMoves, landed on $ret")
-                }
-                ret
-            }
-            return keypad.firstOrNull{ it.second == finish }?.first ?: throw IllegalArgumentException("Could not find finish $finish")
-        }
 
         fun punch(codes: List<Char>): List<Char> {
             return (listOf('A') + codes).windowed(2) {
@@ -188,132 +163,26 @@ class Day21 {
     inner class Logic(input: List<String>) {
         val codes = input
 
-        fun solvePart1():Int {
-
-            fun splitByAandCount(input: String) : List<Int> {
-                return input.splitIgnoreEmpty("A").map { it.length }
-            }
-            fun reverseDirectional(input: String, keypad: KeyPad = KeyPad.DIRECTIONAL): String {
-                val moves = input.split("(?<=A)".toRegex()).map { it.toList() }
-                var cur = 'A'
-                val reversed = moves.dropLast(1).map{
-                    cur = keypad.reverseMove(cur, it)
-                    cur
-                }
-                //println(reversed)
-                return reversed.joinToString("")
-            }
-
-            //val elements = listOf('A', 'B', 'C')
-            //elements.permutations(3).forEach { println(it) }
-
-            KeyPad.NUMERIC.moves.toList().sortedBy { it.first.first }.forEach{ move ->
-                println("${move.first} -> ${move.second}")
-            }
-
-            val reverse = "v<<A>>^AvA^Av<<A>>^AA<vA<A>>^AAvAA<^A>A<vA^>AA<A>Av<<A>A^>AAA<Av>A^A"
-            val step1 = reverseDirectional(reverse)
-            println(step1)
-            val step2 = reverseDirectional(step1)
-            println(step2)
-            val step3 = reverseDirectional(step2, KeyPad.NUMERIC)
-            println(step3)
-
-            println(KeyPad.DIRECTIONAL.punch("^A^^<<A>>AvvvA".toList()).joinToString(""))
-            println(KeyPad.DIRECTIONAL.punch("^A<<^^A>>AvvvA".toList()).joinToString(""))
-
-            println(KeyPad.DIRECTIONAL.punch(KeyPad.DIRECTIONAL.punch("^A^^<<A>>AvvvA".toList())).joinToString(""))
-            println(KeyPad.DIRECTIONAL.punch(KeyPad.DIRECTIONAL.punch("^A<<^^A>>AvvvA".toList())).joinToString(""))
-
-
-
-            fun recurse(start: Char, translate: List<Char>, depth:Int): List<List<Char>> {
-                val newOptions = translate.fold(listOf<List<Char>>() to start ) { (acc, prev), cur ->
-                    val options = KeyPad.DIRECTIONAL.hardCodedGetMove(prev, cur)
-                    val generate = if(acc.isEmpty()) {
-                        options
-                    } else {
-                        options.flatMap { option -> acc.map { it + option } }
-                    }
-                    //println("From $prev to $cur: $options, $generate")
-
-                    generate to cur
-                }.first
-                return if(depth == 0) {
-                    newOptions
-                } else {
-                    newOptions.flatMap { option ->
-                        recurse(start, option, depth - 1)
-                    }
-                }
-            }
-            println("============================")
-            val result = recurse('A', listOf('<', '<', '^', '^', 'A'), 1)
-            result.forEach { println("${it.size} -> $it") }
-            //val run1 = KeyPad.DIRECTIONAL.hardCodedGetMove('A', '<')
-            //println(run1)
-
-
-
-            val ret = codes.sumOf{
-                val humanMoves = KeyPad.DIRECTIONAL.punch(
-                    KeyPad.DIRECTIONAL.punch(
-                        KeyPad.NUMERIC.punch(it.toList())
-                    )
-                )
-                println("$it: ${humanMoves.joinToString("")} [${humanMoves.count()}]")
-                humanMoves.count() * it.take(3).toInt()
-            }
-
-            val totalMoves = ("A" + codes.first()).windowed(2) {
-                KeyPad.NUMERIC.getMove(it[0], it[1]) + 'A'
-            }.flatten()
-            println("${splitByAandCount(totalMoves.joinToString(""))}")
-            println("${splitByAandCount("<A^A>^^AvvvA")}")
-            println("${codes.first()} -> $totalMoves")
-            val subMoves = (listOf('A') + totalMoves).windowed(2) {
-                KeyPad.DIRECTIONAL.getMove(it[0], it[1]) + 'A'
-            }.flatten()
-            println("${splitByAandCount(subMoves.joinToString(""))}")
-            println("${splitByAandCount("v<<A>>^A<A>AvA<^AA>A<vAAA>^A")}")
-            println("$subMoves")
-            val subMoves2 = (listOf('A') + subMoves).windowed(2) {
-                KeyPad.DIRECTIONAL.getMove(it[0], it[1]) + 'A'
-            }.flatten()
-            println("${splitByAandCount(subMoves2.joinToString(""))}")
-            println("${splitByAandCount("<vA<AA>>^AvAA<^A>A<v<A>>^AvA^A<vA>^A<v<A>^A>AAvA^A<v<A>A>^AAAvA<^A>A")}")
-            println("$subMoves2")
-
-
-
-            return ret
-
-            TODO()
-        }
-
         val recurseCached = FunctionCache(::recurseCount)
         fun recurseCount(punch: Pair<List<Char>, Int>): Long {
-            //println(' '.times(2 - punch.second) + " Punching ${punch.first}")
-
             if(punch.second <= 0) {
-                // return now
                 return 1L
             }
-            val moves = KeyPad.DIRECTIONAL.punch(punch.first)
-            val splitMoves = moves.splitBy({it == 'A'}, true)
-            //println(' '.times(2 - punch.second) + " Moves: $splitMoves")
-            return splitMoves.sumOf{ recurseCached(it to punch.second-1)}
+            return KeyPad.DIRECTIONAL.punch(punch.first)
+                .splitBy({it == 'A'}, true)
+                .sumOf{ recurseCached(it to punch.second-1)}
         }
 
-        fun solvePart2():Long {
-            val punchers = 26 // robots and humans
+        fun solve(robots:Int):Long {
+            val punchers = robots + 1 // humans are punchers too!
             return codes.sumOf{
-                println(KeyPad.NUMERIC.punch(it.toList()))
                 val size = recurseCached(KeyPad.NUMERIC.punch(it.toList()) to punchers)
-                println(size)
                 size * it.take(3).toInt()
             }
         }
+        fun solvePart1() = solve(2)
+        fun solvePart2() = solve(25)
+
     }
 
     @Nested
@@ -332,6 +201,12 @@ class Day21 {
         fun `Part 1 Example`() {
             val answer = Logic(testInput).solvePart1()
             assertThat(answer).isEqualTo(126384)
+        }
+
+        @Disabled("Only used for debugging")
+        @Test
+        fun testMapping() {
+            val asdf = KeyPad.DIRECTIONAL.moves.map { it.key to it.value }.sortedBy { it.first.first }.forEach { println("{${it.first} -> ${it.second}") }
         }
 
         @Test
