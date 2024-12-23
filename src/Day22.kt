@@ -5,14 +5,17 @@ import org.junit.jupiter.api.Nested
 class Day22 {
 
 
-    data class Buyer(val patternMap: Map<Pattern, Int>) {
+    data class Buyer(val patternMap: Map<Pattern, Long>) {
+        fun getBid(pattern: Pattern): Long {
+            return patternMap[pattern]?:0L
+        }
         companion object {
             fun from(seed: Long): Buyer {
                 val prices = (1..2000).fold(listOf(seed)) { acc, _ -> acc + nextSecret(acc.last()) }.map { it % 10 }
                 val diffs = prices.windowed(2).map { it[1] - it[0] }
                 val map = diffs.windowed(4).mapIndexed { index: Int, longs: List<Long> ->
                     Pattern.fromList(longs) to index
-                }.groupBy { it.first }.mapValues { it.value.map { it.second }.first() }
+                }.groupBy { it.first }.mapValues { it.value.map { it.second }.first() }.mapValues { prices[it.value+4] }
                 return Buyer(map)
             }
 
@@ -30,6 +33,18 @@ class Day22 {
         }
     }
     data class Pattern(val a: Long, val b: Long, val c: Long, val d: Long) {
+
+        val hashCode = generateHashCode()
+        fun generateHashCode(): Int {
+            var result = a.hashCode()
+            result = 31 * result + b.hashCode()
+            result = 31 * result + c.hashCode()
+            result = 31 * result + d.hashCode()
+            return result
+        }
+
+        override fun hashCode() = hashCode
+
         companion object {
             fun fromList(from: List<Long>) = Pattern(from[0], from[1], from[2], from[3])
         }
@@ -73,7 +88,7 @@ class Day22 {
                 useRange.forEach { b ->
                     useRange.forEach { c ->
                         useRange.forEach { d ->
-                            yield(listOf(a, b, c, d).map{it.toLong()})
+                            yield(Pattern.fromList(listOf(a, b, c, d).map{it.toLong()}))
                         }
                     }
                 }
@@ -83,28 +98,11 @@ class Day22 {
         fun solvePart2():Long {
 
             val buyers = start.map { Buyer.from(it) }
-
-            //val masks = getMasks()
             val masks = getMasksSequence()
-
-            val allPrices = getPrices()
-            val alldiffs = allPrices.map { prices -> prices.windowed(2).map { it[1] - it[0] }}
-            val allPatternIndexes = alldiffs.map { diffs ->
-                diffs.windowed(4).mapIndexed { index: Int, longs: List<Long> ->
-                    longs to index
-                }.groupBy { it.first }.mapValues { it.value.map { it.second }.first() }
+            val result = masks.pmap { pattern ->
+                buyers.sumOf { it.getBid(pattern) }
             }
-            val result2 = masks.pmap { pattern ->
-                allPatternIndexes.mapIndexed { buyerId: Int, patternGroup: Map<List<Long>, Int> ->
-                    val idx = patternGroup[pattern]
-                    if(idx != null) {
-                        allPrices[buyerId][idx+4]
-                    } else {
-                        0L
-                    }
-                }.sum()
-            }
-            return result2.maxOf { it }
+            return result.maxOf { it }
         }
     }
 

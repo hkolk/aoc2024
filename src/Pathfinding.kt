@@ -92,4 +92,22 @@ object Pathfinding {
         }
         return null
     }
+
+
+    fun <T, A> floodFill(
+        start: T,
+        map: Map<T, A>,
+        adjacent: (T, Map<T, A>)-> List<T>
+    ): Set<T> {
+        val Q = mutableListOf(start to 0)
+        val explored = mutableSetOf(start)
+        while(Q.isNotEmpty()) {
+            val current = Q.removeFirst()
+            adjacent(current.first, map).filter { it !in explored}.forEach{
+                Q.add(it to current.second+1)
+            }
+            explored.add(current.first)
+        }
+        return explored
+    }
 }
