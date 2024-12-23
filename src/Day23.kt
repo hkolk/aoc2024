@@ -5,55 +5,30 @@ import org.junit.jupiter.api.Nested
 class Day23 {
     inner class Logic(input: List<String>) {
         val connections = input.flatMap { it.splitIgnoreEmpty("-").let { listOf(it[0] to it[1], it[1] to it[0]) } }
+        val groups = connections.groupBy { it.first }.mapValues { it.value.map { it.second } }
 
-        fun solvePart1():Int {
-            val groups = connections.groupBy { it.first }.mapValues { it.value.map { it.second } }
-            val asdf2 = groups.flatMap{ (start, conns) ->
-                val asdf = conns.combinations(2).map { setOf(it[0], it[1], start) to connections.contains(it[0] to it[1]) }.filter { it.second }.toList()
-                val grouped = asdf.map { it.first }
-                grouped
+        fun findNetworks(size: Int): Set<Set<String>> {
+            return groups.flatMap{ (start, conns) ->
+                conns.combinations(size-1).mapNotNull { group ->
+                    // everything in group must also be connected
+                    if(group.combinations(2).all {connections.contains(it[0] to it[1])})
+                        setOf(start) + group
+                    else null
+                }
             }.toSet()
-            return asdf2.count { it.any{it.startsWith("t")} }
-            TODO()
-        }
-        fun solvePart2():Int {
-            val groups = connections.groupBy { it.first }.mapValues { it.value.map { it.second } }
-            val asdf2 = groups.flatMap{ (start, conns) ->
-                val asdf = conns.combinations(3).map {
-                    setOf(it[0], it[1], start) to connections.contains(it[0] to it[1])
-                }.filter { it.second }.toList()
-                val grouped = asdf.map { it.first }
-                grouped
-            }.toSet()
-            return asdf2.count { it.any{it.startsWith("t")} }
-            TODO()
         }
 
+        fun solvePart1() = findNetworks(3).count { it.any{it.startsWith("t")}}
 
-        fun solvePart1_old():Int {
-            println(connections)
-            val map = connections.groupBy { it.first }.mapValues { it.value.map { it.second } }
-            val withT = map.keys.filter { it.startsWith("t") }
-            println(withT)
-            withT.forEach { cur ->
-                val conns = map[cur]!!
-                conns.filter { it != cur }.forEach { conn ->
+        fun solvePart2():String {
+            val maxSize = groups.maxOf { it.value.size+1 }
+            (maxSize downTo 0).forEach { size ->
+                val asdf = findNetworks(size)
+                if(asdf.isNotEmpty()) {
+                    return asdf.first().sorted().joinToString(",")
                 }
             }
-
-            val scan = map.keys.toMutableSet()
-            val graphs = mutableListOf<Set<String>>()
-            while(scan.isNotEmpty()) {
-                val start = scan.first()
-                val nodes = Pathfinding.floodFill(start, map, {cur, map -> map[cur]!!})
-                println(scan)
-                scan.removeAll(nodes)
-                graphs.add(nodes)
-                println(scan)
-            }
-            println(graphs)
-            return graphs.count { it.any { it.startsWith("t") } }
-            return 0
+            TODO()
         }
     }
 
@@ -104,17 +79,17 @@ td-yn
         @Test
         fun `Part 1 Answer`() {
             val answer = Logic(realInput).solvePart1()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo(1352)
         }
         @Test
         fun `Part 2 Example`() {
             val answer = Logic(testInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo("co,de,ka,ta")
         }
         @Test
         fun `Part 2 Answer`() {
             val answer = Logic(realInput).solvePart2()
-            assertThat(answer).isEqualTo(0)
+            assertThat(answer).isEqualTo("dm,do,fr,gf,gh,gy,iq,jb,kt,on,rg,xf,ze")
         }
     }
 
